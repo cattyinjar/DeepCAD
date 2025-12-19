@@ -20,18 +20,18 @@ if download_demo_file:
     file_name = 'fish_localbrain'  # select the demo file to be trained (e.g. 'ATP_3D', 'fish_localbrain', 'NP_3D', ...)
     datasets_path, _ = download_demo(download_filename=file_name)
 else:
-    datasets_path =   # folder containing tif files for training, must use /
+    datasets_path = '/mnt/nas00/DFN/datasets/2p-bench/low_snr'  # folder containing tif files for training, must use /
 
 print(datasets_path)
 # %% First setup some parameters for training
-n_epochs =                 # the number of training epochs
-GPU =                  # the index of GPU used for computation (e.g. '0', '0,1', '0,1,2')
-train_datasets_size =   # dataset size for training (the number of patches)
-patch_xy =             # the width and height of 3D patches
-patch_t =               # the time dimension of 3D patches
-overlap_factor =        # the overlap factor between two adjacent patches
-pth_dir =            # pth file and visualization result file path
-num_workers =              # if you use Windows system, set this to 0.
+n_epochs = 30           # the number of training epochs
+GPU = '1'  # the index of GPU used for computation (e.g. '0', '0,1', '0,1,2')
+train_datasets_size = 2000  # dataset size for training (the number of patches)
+patch_xy = 150           # the width and height of 3D patches
+patch_t = 150            # the time dimension of 3D patches
+overlap_factor = 0.5    # the overlap factor between two adjacent patches
+pth_dir = '/mnt/nas00/DFN/models/deepcad_lf_bestmodel'         # pth file and visualization result file path
+num_workers = 0.        # if you use Windows system, set this to 0.
 
 # %% Setup some parameters for result visualization during training period (optional)
 visualize_images_per_epoch = False  # choose whether to show inference performance after each epoch

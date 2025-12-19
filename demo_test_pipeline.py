@@ -19,19 +19,19 @@ if download_demo_file:
     file_name = 'fish_localbrain'  # select the demo file you want to test (e.g. 'ATP_3D', 'fish_localbrain', 'NP_3D', ...)
     datasets_path, denoise_model = download_demo(download_filename=file_name)
 else:
-    denoise_model =   # A folder containing pth models to be tested
-    pth_dir =
-    datasets_path =
-    output_dir =
+    denoise_model = 'Z:/DFN/models/deepcad_lf_bestmodel'  # A folder containing pth models to be tested
+    pth_dir = 'Z:/DFN/models/deepcad_lf_bestmodel'
+    datasets_path = 'Z:/DFN/datasets'
+    output_dir = 'Z:/DFN/results'
 
 # %% First setup some parameters for testing
-test_datasize =               # the number of frames to be tested (test all frames if the number exceeds the total number of frames in a .tif file)
-GPU =                             # the index of GPU you will use for computation (e.g. '0', '0,1', '0,1,2')
-patch_xy =                        # the width and height of 3D patches
-patch_t =                        # the time dimension of 3D patches
-overlap_factor =                   # the overlap factor between two adjacent patches.
+test_datasize = 500           # the number of frames to be tested (test all frames if the number exceeds the total number of frames in a .tif file)
+GPU = '1'                            # the index of GPU you will use for computation (e.g. '0', '0,1', '0,1,2')
+patch_xy = 150                    # the width and height of 3D patches
+patch_t = 150                   # the time dimension of 3D patches
+overlap_factor = 0.5               # the overlap factor between two adjacent patches.
                                       # Since the receptive field of 3D-Unet is ~90, seamless stitching requires an overlap (patch_xyt*overlap_factor）of at least 90 pixels.
-num_workers = 0                       # if you use Windows system, set this to 0.
+num_workers = 0.                       # if you use Windows system, set this to 0.
 
 # %% Setup some parameters for result visualization during testing period (optional)
 visualize_images_per_epoch = False  # choose whether to display inference performance after each epoch

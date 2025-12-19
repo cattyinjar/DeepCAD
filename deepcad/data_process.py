@@ -80,9 +80,27 @@ class trainset(Dataset):
         stack_index = self.stack_index[index]
         noise_img = self.noise_img_all[stack_index]
         single_coordinate = self.coordinate_list[self.name_list[index]]
-        """
-        Fill in the code please.
-        """
+
+        # Extract coordinates for current patch
+        init_h = single_coordinate['init_h']
+        end_h = single_coordinate['end_h']
+        init_w = single_coordinate['init_w']
+        end_w = single_coordinate['end_w']
+        init_s = single_coordinate['init_s']
+        end_s = single_coordinate['end_s']
+
+        # Crop the 3D noisy patch from the full stack: shape (t, h, w)
+        noise_patch = noise_img[init_s:end_s, init_h:end_h, init_w:end_w]
+
+        # Split interlaced frames into two 3D tiles (input and target)
+        t_len = noise_patch.shape[0]
+        # Ensure even temporal length for perfect interlacing
+        if t_len % 2 != 0:
+            noise_patch = noise_patch[:t_len - 1]
+            t_len = noise_patch.shape[0]
+
+        input = noise_patch[0:t_len:2, :, :]
+        target = noise_patch[1:t_len:2, :, :]
         p_exc = random.random()  # generate a random number determinate whether swap input and target
         if p_exc < 0.5:
             input, target = random_transform(input, target)
@@ -121,9 +139,16 @@ class testset(Dataset):
             single_coordinate : the specific coordinate of sub-stacks in the noisy image for stitching all sub-stacks
         """
         single_coordinate = self.coordinate_list[self.name_list[index]]
-        """
-        Fill in the code please.
-        """
+
+        # Crop the noisy sub-stack for testing and return coordinate for stitching
+        init_h = single_coordinate['init_h']
+        end_h = single_coordinate['end_h']
+        init_w = single_coordinate['init_w']
+        end_w = single_coordinate['end_w']
+        init_s = single_coordinate['init_s']
+        end_s = single_coordinate['end_s']
+
+        noise_patch = self.noise_img[init_s:end_s, init_h:end_h, init_w:end_w]
         return noise_patch, single_coordinate
 
     def __len__(self):
