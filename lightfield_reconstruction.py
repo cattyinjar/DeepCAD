@@ -82,24 +82,6 @@ def find_mat_psf(matpath):
         arr = np.array(arr)
         return arr
 
-
-def pad_psf_xy_to_shape(psf_xy_z, target_shape):
-    """Center-pad (Hx, Wy, Z) -> (target_h, target_w, Z)
-    psf_xy_z: ndarray (h, w, z)
-    target_shape: (target_h, target_w)
-    """
-    # h, w, z = psf_xy_z.shape
-    # th, tw = target_shape
-    # if (h, w) == (th, tw):
-    #     return psf_xy_z.copy()
-    # padded = np.zeros((th, tw, z), dtype=psf_xy_z.dtype)
-    # start_h = (th - h) // 2
-    # start_w = (tw - w) // 2
-    # padded[start_h:start_h + h, start_w:start_w + w, :] = psf_xy_z
-    # return padded
-    return psf_xy_z
-
-
 def _fftconv_torch(a, b, device):
     # a, b: torch tensors (H,W,Z) float32
     # compute output with FFT-based convolution and return 'same' shape as a
@@ -164,7 +146,7 @@ def main():
         # path to .mat file that contains 5D PSF (x, y, U, V, Z)
         'psf': '/mnt/nas00/DFN/RUSH3D/IdealLF_3Dpsf_M7.85_NA0.5_zmin-0.00029999_zmax0.00030001_zspacing1e-05.mat',
         # directory containing rearranged view images (expects UxV views inside)
-        'views_dir': '/mnt/nas00/DFN/RUSH3D/neuron_100ms_g70_20X_C2/neuron_100ms_g70_20X_S1_C2_125/',
+        'views_dir': '/mnt/nas00/DFN/RUSH3D/neuron_20X_C2/neuron_20X_S1_C2_150/',
         # angular dims (default 15x15)
         'U': 15,
         'V': 15,
@@ -184,7 +166,7 @@ def main():
         'device': 'cuda:3',
         'upsample_rate': 5,
         # output path for reconstructed volume (npy or tiff if tifffile installed)
-        'out': '/mnt/nas00/DFN/RUSH3D/results/hhvuxyz.tiff'
+        'out': '/mnt/nas00/DFN/RUSH3D/results/hvuxyz.tiff'
     }
 
     print('Loading PSF...')
@@ -227,7 +209,7 @@ def main():
         for u in range(CONFIG['U_start'], CONFIG['U_end'] + 1):
             for v in range(CONFIG['V_start'], CONFIG['V_end'] + 1):
                 try:
-                    view_img = load_view_image(CONFIG['views_dir'], u+1, v+1, CONFIG['x_start'], CONFIG['x_end'], CONFIG['y_start'], CONFIG['y_end'])
+                    view_img = load_view_image(CONFIG['views_dir'], u, v, CONFIG['x_start'], CONFIG['x_end'], CONFIG['y_start'], CONFIG['y_end'])
                 except Exception as e:
                     print(f'skip view u={u} v={v}: {e}')
                     continue
@@ -247,21 +229,17 @@ def main():
 
                 # extract PSF for this angular view
                 # psf5 has shape (Z, V, U, Y, X)
-                psf_zyx = psf5[:, v, u, :, :]
-
+                psf_zyx = psf5[:, (v - 1), (u - 1), :, :]
 
                 # transpose to (X, Y, Z) for downstream functions
                 psf_uv = np.transpose(psf_zyx, (2, 1, 0))
 
-                # pad PSF xy to image size
-                psf_padded = pad_psf_xy_to_shape(psf_uv, (CONFIG['upsample_rate']*H_img, CONFIG['upsample_rate']*W_img))
-
                 # ensure PSF non-negative
-                psf_padded = np.maximum(psf_padded, 0.0)
+                psf_uv = np.maximum(psf_uv, 0.0)
 
                 # run RL deconvolution per-view
                 try:
-                    vol_t = rl_deconvolution_3d(vol_t, obs_t, psf_padded, one_t,  omega = CONFIG['lambda'], use_gpu=CONFIG['use_gpu'], device=CONFIG['device'])
+                    vol_t = rl_deconvolution_3d(vol_t, obs_t, psf_uv, one_t,  omega = CONFIG['lambda'], use_gpu=CONFIG['use_gpu'], device=CONFIG['device'])
                 except Exception as e:
                     print(f'RL failed for u={u},v={v}: {e}')
                     continue
@@ -314,7 +292,6 @@ def main():
         out2 = out + '.npy'
         np.save(out2, vol_zhw_resized)
         print('Saved volume to', out2)
-
 
 if __name__ == '__main__':
     main()
